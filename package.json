@@ -1,0 +1,62 @@
+{
+  "name": "@asserted/grpc-uptime",
+  "description": "Test grpc API uptime with Asserted",
+  "version": "0.0.1",
+  "author": "Eric Hacke",
+  "bugs": {
+    "url": "https://github.com/assertedio/grpc-uptime/issues"
+  },
+  "dependencies": {
+    "@grpc/proto-loader": "^0.1.0",
+    "async": "^1.5.2",
+    "google-protobuf": "^3.0.0",
+    "grpc": "^1.11.0",
+    "lodash": "^4.6.1"
+  },
+  "devDependencies": {
+    "@ehacke/eslint-config": "^1.1.6",
+    "@ehacke/prettier-config": "^1.0.2",
+    "asrtd": "^1.3.4",
+    "eslint": "7.2.0",
+    "prettier": "^2.0.5",
+    "prettier-eslint-cli": "^5.0.0",
+    "start-server-and-test": "^1.11.0"
+  },
+  "files": [
+    "route_guide",
+    "images",
+    "protos",
+    "runAsrtd.sh"
+  ],
+  "homepage": "https://github.com/assertedio/grpc-uptime#readme",
+  "keywords": [
+    "api",
+    "asserted",
+    "chai",
+    "example",
+    "grpc",
+    "health",
+    "health check",
+    "integration",
+    "integration testing",
+    "mocha",
+    "monitoring",
+    "nodejs",
+    "test",
+    "uptime"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/assertedio/grpc-uptime.git"
+  },
+  "scripts": {
+    "asrtd:run": "asrtd run",
+    "client": "node route_guide/route_guide_client.js",
+    "lint": "prettier-eslint --write && eslint --fix \"**/*.{js,ts}\"",
+    "postinstall": "cd .asserted && npm i",
+    "start": "node route_guide/route_guide_server.js",
+    "test:asrtd": "./runAsrtd.sh"
+  }
+}
