@@ -1,63 +1,57 @@
 const { expect } = require('chai');
-const io = require('socket.io-client');
-const util = require('util');
 const sinon = require('sinon');
+const Bluebird = require('bluebird');
+const path = require('path');
+const grpc = require('grpc');
+const protoLoader = require('@grpc/proto-loader');
 
-const sleep = util.promisify(setTimeout);
+const PROTO_PATH = path.join(__dirname, '../protos/route_guide.proto');
+const DB_PATH = path.join(__dirname, '../route_guide/route_guide_db.json');
 
-const monitoringClient = io('http://localhost:3000', { forceNew: true });
+const packageDefinition = protoLoader.loadSync(
+  PROTO_PATH,
+  {
+    keepCase: true,
+    longs: String,
+    enums: String,
+    defaults: true,
+    oneofs: true,
+  });
+const routeguide = grpc.loadPackageDefinition(packageDefinition).routeguide;
+const client = new routeguide.RouteGuide('localhost:50051',
+  grpc.credentials.createInsecure());
+
+const COORD_FACTOR = 1e7;
 
 describe('grpc api tests', () => {
-  let client;
+  it('get feature', async () => {
+    const point1 = {
+      latitude: 409146138,
+      longitude: -746188906,
+    };
+    const point2 = {
+      latitude: 0,
+      longitude: 0,
+    };
 
-  before((done) => {
-    monitoringClient.emit('add user', 'monitoring');
-    monitoringClient.once('connect', () => done());
-  });
+    const expectedFeature1 = {
+      "name": "Berkshire Valley Management Area Trail, Jefferson, NJ, USA",
+      "location": {
+        "latitude": 409146138,
+        "longitude": -746188906
+      }
+    };
+    const feature1 = await Bluebird.fromCallback((cb) => client.getFeature(point1, cb));
+    expect(feature1).to.eql(expectedFeature1);
 
-  beforeEach((done) => {
-    client = io('http://localhost:3000', { forceNew: true });
-    client.once('connect', () => done());
-  });
-
-  afterEach(() => {
-    client.disconnect();
-  });
-
-  after(() => {
-    monitoringClient.disconnect();
-  });
-
-  it('user joined and login', async () => {
-    const login = sinon.stub();
-    const joined = sinon.stub();
-
-    monitoringClient.once('user joined', joined);
-    client.once('login', login);
-
-    client.emit('add user', 'new-user');
-
-    // Admittedly a bit gross to use sleep here, but just wanted something simple.
-    // The less brittle approach would be to block on a promise until the stubs are called.
-    await sleep(100);
-
-    expect(login.args).to.eql([[{ numUsers: 2 }]]);
-    expect(joined.args).to.eql([[{ numUsers: 2, username: 'new-user' }]]);
-  });
-
-  it('user sent message', async () => {
-    const monitoringMessage = sinon.stub();
-    const clientMessage = sinon.stub();
-
-    monitoringClient.once('new message', monitoringMessage);
-    client.once('new message', clientMessage);
-
-    client.emit('add user', 'new-user');
-    await sleep(100);
-    client.emit('new message', 'some-message');
-    await sleep(100);
-
-    expect(monitoringMessage.args).to.eql([[{ message: 'some-message', username: 'new-user' }]]);
-    expect(clientMessage.args).to.eql([]);
+    const expectedFeature2 = {
+      "name": "",
+      "location": {
+        "latitude": 0,
+        "longitude": 0
+      }
+    };
+    const feature2 = await Bluebird.fromCallback((cb) => client.getFeature(point2, cb));
+    expect(feature2).to.eql(expectedFeature2);
   });
 });

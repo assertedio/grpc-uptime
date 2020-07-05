@@ -18,13 +18,13 @@
 
 const async = require('async');
 const fs = require('fs');
-const parseArgs = require('minimist');
 const path = require('path');
 const _ = require('lodash');
 const grpc = require('grpc');
 const protoLoader = require('@grpc/proto-loader');
 
 const PROTO_PATH = path.join(__dirname, '../protos/route_guide.proto');
+const DB_PATH = path.join(__dirname, './route_guide_db.json');
 
 const packageDefinition = protoLoader.loadSync(
   PROTO_PATH,
@@ -56,12 +56,12 @@ function runGetFeature(callback) {
     }
     if (feature.name === '') {
       console.log('Found no feature at ' +
-          feature.location.latitude/COORD_FACTOR + ', ' +
-          feature.location.longitude/COORD_FACTOR);
+        feature.location.latitude / COORD_FACTOR + ', ' +
+        feature.location.longitude / COORD_FACTOR);
     } else {
       console.log('Found feature called "' + feature.name + '" at ' +
-          feature.location.latitude/COORD_FACTOR + ', ' +
-          feature.location.longitude/COORD_FACTOR);
+        feature.location.latitude / COORD_FACTOR + ', ' +
+        feature.location.longitude / COORD_FACTOR);
     }
     next();
   }
@@ -97,10 +97,10 @@ function runListFeatures(callback) {
   };
   console.log('Looking for features between 40, -75 and 42, -73');
   const call = client.listFeatures(rectangle);
-  call.on('data', function(feature) {
-      console.log('Found feature called "' + feature.name + '" at ' +
-          feature.location.latitude/COORD_FACTOR + ', ' +
-          feature.location.longitude/COORD_FACTOR);
+  call.on('data', function (feature) {
+    console.log('Found feature called "' + feature.name + '" at ' +
+      feature.location.latitude / COORD_FACTOR + ', ' +
+      feature.location.longitude / COORD_FACTOR);
   });
   call.on('end', callback);
 }
@@ -112,10 +112,7 @@ function runListFeatures(callback) {
  * @param {function} callback Called when this demo is complete
  */
 function runRecordRoute(callback) {
-  const argv = parseArgs(process.argv, {
-    string: 'db_path',
-  });
-  fs.readFile(path.resolve(argv.db_path), function(err, data) {
+  fs.readFile(path.resolve(DB_PATH), function (err, data) {
     if (err) {
       callback(err);
       return;
@@ -147,12 +144,12 @@ function runRecordRoute(callback) {
        * Sends the point, then calls the callback after a delay
        * @param {function} callback Called when complete
        */
-      return function(callback) {
-        console.log('Visiting point ' + lat/COORD_FACTOR + ', ' +
-            lng/COORD_FACTOR);
+      return function (callback) {
+        console.log('Visiting point ' + lat / COORD_FACTOR + ', ' +
+          lng / COORD_FACTOR);
         call.write({
           latitude: lat,
-          longitude: lng
+          longitude: lng,
         });
         _.delay(callback, _.random(500, 1500));
       };
@@ -162,9 +159,9 @@ function runRecordRoute(callback) {
     for (let i = 0; i < num_points; i++) {
       const rand_point = feature_list[_.random(0, feature_list.length - 1)];
       point_senders[i] = pointSender(rand_point.location.latitude,
-                                     rand_point.location.longitude);
+        rand_point.location.longitude);
     }
-    async.series(point_senders, function() {
+    async.series(point_senders, function () {
       call.end();
     });
   });
@@ -177,9 +174,9 @@ function runRecordRoute(callback) {
  */
 function runRouteChat(callback) {
   const call = client.routeChat();
-  call.on('data', function(note) {
+  call.on('data', function (note) {
     console.log('Got message "' + note.message + '" at ' +
-        note.location.latitude + ', ' + note.location.longitude);
+      note.location.latitude + ', ' + note.location.longitude);
   });
 
   call.on('end', callback);
@@ -212,7 +209,7 @@ function runRouteChat(callback) {
   for (let i = 0; i < notes.length; i++) {
     var note = notes[i];
     console.log('Sending message "' + note.message + '" at ' +
-        note.location.latitude + ', ' + note.location.longitude);
+      note.location.latitude + ', ' + note.location.longitude);
     call.write(note);
   }
   call.end();
@@ -226,7 +223,7 @@ function main() {
     runGetFeature,
     runListFeatures,
     runRecordRoute,
-    runRouteChat
+    runRouteChat,
   ]);
 }
 

@@ -17,13 +17,13 @@
  */
 
 const fs = require('fs');
-const parseArgs = require('minimist');
 const path = require('path');
 const _ = require('lodash');
 const grpc = require('grpc');
 const protoLoader = require('@grpc/proto-loader');
 
 const PROTO_PATH = path.join(__dirname, '../protos/route_guide.proto');
+const DB_PATH = path.join(__dirname, './route_guide_db.json');
 
 const packageDefinition = protoLoader.loadSync(
   PROTO_PATH,
@@ -62,14 +62,14 @@ function checkFeature(point) {
   for (let i = 0; i < feature_list.length; i++) {
     feature = feature_list[i];
     if (feature.location.latitude === point.latitude &&
-        feature.location.longitude === point.longitude) {
+      feature.location.longitude === point.longitude) {
       return feature;
     }
   }
   const name = '';
   feature = {
     name: name,
-    location: point
+    location: point,
   };
   return feature;
 }
@@ -98,14 +98,14 @@ function listFeatures(call) {
   const top = _.max([lo.latitude, hi.latitude]);
   const bottom = _.min([lo.latitude, hi.latitude]);
   // For each feature, check if it is in the given bounding box
-  _.each(feature_list, function(feature) {
+  _.each(feature_list, function (feature) {
     if (feature.name === '') {
       return;
     }
     if (feature.location.longitude >= left &&
-        feature.location.longitude <= right &&
-        feature.location.latitude >= bottom &&
-        feature.location.latitude <= top) {
+      feature.location.longitude <= right &&
+      feature.location.latitude >= bottom &&
+      feature.location.latitude <= top) {
       call.write(feature);
     }
   });
@@ -154,7 +154,7 @@ function recordRoute(call, callback) {
   let previous = null;
   // Start a timer
   const start_time = process.hrtime();
-  call.on('data', function(point) {
+  call.on('data', function (point) {
     point_count += 1;
     if (checkFeature(point).name !== '') {
       feature_count += 1;
@@ -166,14 +166,14 @@ function recordRoute(call, callback) {
     }
     previous = point;
   });
-  call.on('end', function() {
+  call.on('end', function () {
     callback(null, {
       point_count: point_count,
       feature_count: feature_count,
       // Cast the distance to an integer
-      distance: distance|0,
+      distance: distance | 0,
       // End the timer
-      elapsed_time: process.hrtime(start_time)[0]
+      elapsed_time: process.hrtime(start_time)[0],
     });
   });
 }
@@ -195,12 +195,12 @@ function pointKey(point) {
  * @param {Duplex} call The stream for incoming and outgoing messages
  */
 function routeChat(call) {
-  call.on('data', function(note) {
+  call.on('data', function (note) {
     const key = pointKey(note.location);
     /* For each note sent, respond with all previous notes that correspond to
      * the same point */
     if (route_notes.hasOwnProperty(key)) {
-      _.each(route_notes[key], function(note) {
+      _.each(route_notes[key], function (note) {
         call.write(note);
       });
     } else {
@@ -209,7 +209,7 @@ function routeChat(call) {
     // Then add the new note to the list
     route_notes[key].push(JSON.parse(JSON.stringify(note)));
   });
-  call.on('end', function() {
+  call.on('end', function () {
     call.end();
   });
 }
@@ -222,10 +222,10 @@ function routeChat(call) {
 function getServer() {
   const server = new grpc.Server();
   server.addProtoService(routeguide.RouteGuide.service, {
-    getFeature: getFeature,
-    listFeatures: listFeatures,
-    recordRoute: recordRoute,
-    routeChat: routeChat
+    getFeature,
+    listFeatures,
+    recordRoute,
+    routeChat,
   });
   return server;
 }
@@ -234,10 +234,8 @@ if (require.main === module) {
   // If this is run as a script, start a server on an unused port
   const routeServer = getServer();
   routeServer.bind('0.0.0.0:50051', grpc.ServerCredentials.createInsecure());
-  const argv = parseArgs(process.argv, {
-    string: 'db_path',
-  });
-  fs.readFile(path.resolve(argv.db_path), function(err, data) {
+
+  fs.readFile(path.resolve(DB_PATH), function (err, data) {
     if (err) throw err;
     feature_list = JSON.parse(data);
     routeServer.start();
