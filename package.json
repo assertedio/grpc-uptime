@@ -52,6 +52,7 @@
     "client": "node route_guide/route_guide_client.js",
     "postinstall": "cd .asserted && npm i",
     "start": "node route_guide/route_guide_server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "asrtd:run": "asrtd run",
+    "test:asrtd": "./runAsrtd.sh"
   }
 }

@@ -7,3 +7,4 @@ src/commands/templates/*
 scratch.*
 tests/output/*
 tests/resources/*
+!.asserted/
