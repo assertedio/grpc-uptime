@@ -1,5 +1,5 @@
 # grpc-uptime
-Test gRPC API uptime with Asserted
+Monitor gRPC API uptime with Asserted
 
 ![asserted.io](https://raw.githubusercontent.com/assertedio/grpc-uptime/master/images/logo.png)
 
